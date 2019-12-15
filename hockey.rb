@@ -1,6 +1,7 @@
-# C=%[
 require 'base64'
-C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0]
+require'zlib'
+C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
+
 #BEGIN
 require 'io/console'
 require 'socket'
@@ -8,22 +9,26 @@ require'json'
 m1=0
 m2=0
 m=0
+h=1.4
 render=->(bx,by,vx,vy,bar1,bar2){
   $><< "\e[1;1H"
-  puts "require'base64';eval C=Base64.decode64(%("
-  codes=Base64.encode64(C+"\x0"+C).delete("\n").chars
-  50.times{|iy|
-    puts "\r"+50.times.map{|ix|
-      x=ix*0.02
-      y=iy*0.02
-      (
-        (x-bx)**2+(y-by)**2<0.1**2||
-        (x-bar1)**2+(y-1)**2<0.1**2||
-        (x-bar2)**2+y**2<0.1**2
-      ) ? ' ' : codes.shift||'#'
+  puts "require'base64';require'zlib';eval C=Zlib.inflate Base64.decode64(%(;FIXME"
+  codes=Base64.encode64(Zlib.deflate(C)+"\x0"+'#'*C.size).delete("\n").chars
+  42.times{|iy|
+    puts "\r"+60.times.map{|ix|
+      %[ .,':;"!][8-(0..1).sum{|j|
+        ((0..3).count{|k|
+          x=(ix+k/2*0.5)*0.02/1.2
+          y=(2*iy+j+k%2*0.5)*0.02/1.2
+          r=(x-bx)**2+(y-by)**2
+          (0.08**2<r&&r<0.1**2)||
+          (x-bar1)**2+(y-h)**2<0.1**2||
+          (x-bar2)**2+y**2<0.1**2
+        }+1)/2*(3-2*j)
+      }]||codes.shift
     }.join
   }
-  puts "\r))"
+  puts %[\r).delete(%[ .,':;"!])]
 }
 Thread.new{
   STDIN.raw do |f|
@@ -58,10 +63,10 @@ loop{
   y+=vy*0.02
   vx=vx.abs if x<0
   vx=-vx.abs if x>1
-  vy=-vy.abs if y>1
+  vy=-vy.abs if y>h
   vy=vy.abs if y<0
 
-  [[bar1,1],[bar2,0]].each{|ax,ay|
+  [[bar1,h],[bar2,0]].each{|ax,ay|
     dx=x-ax
     dy=y-ay
     dr=(dx**2+dy**2)**0.5
@@ -73,8 +78,7 @@ loop{
   }
   }
   render[x,y,vx,vy,bar1,bar2]
-  socket.puts [x,1-y,-vx,vy,bar2,bar1].to_json
+  socket.puts [x,h-y,-vx,vy,bar2,bar1].to_json
   sleep 0.1
 }
 #END
-# ].gsub(/^ +/, '')
