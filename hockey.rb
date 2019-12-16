@@ -32,13 +32,18 @@ render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
   }
   puts %[\r).delete(%[ .,':;"!])]
 }
+player=1
 Thread.new{
   STDIN.raw do |f|
     loop do
       c=f.getc
       "\x3\x11\x1C"[c]&&exit
       i='DaCdAwBs '.index(c)
-      i&&m1|=m=1<<[i/2,2].min
+      if i
+        m=1<<[i/2,2].min
+        m1|=m if player==1||(i<8&&i%2==0)
+        m2|=m if player==2&&i%2==1
+      end
     end
   end
 }
@@ -48,15 +53,18 @@ if args.size==2
   Thread.new{loop{socket.puts(m);m=0;sleep 0.05}}
   loop{render[*JSON.parse(socket.gets)]}
 end
-server=TCPServer.new(args.first.to_i)
-p server
-socket=nil
-Thread.new{
-  loop{
-    socket=server.accept
-    loop{m2=socket.gets.to_i|m2}rescue 1
+if args.size==1
+  socket=nil
+  Thread.new{
+    server=TCPServer.new(args.first.to_i)
+    loop{
+      socket=server.accept
+      loop{m2=socket.gets.to_i|m2}rescue 1
+    }
   }
-}
+else
+  player=2
+end
 bar1=0.5
 push1=0
 bar2=0.5
