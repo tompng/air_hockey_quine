@@ -1,31 +1,28 @@
-require 'base64'
 require'zlib'
-C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
+$C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
 def hoge
   w=400
   h=560
   a=[200,280,40,-100,200,0,200,0]
   a.each_with_index.map{|v,i|(w+v)*(2*h)**i}.sum
 end
-if C[/\d+/]!=hoge.to_s
+if $C[/\d+/]!=hoge.to_s
   puts hoge
   exit
 end
 #BEGIN
 k=885457562454749327098200
-require 'io/console'
-require 'socket'
+require'io/console'
+require'socket'
 require'json'
 w=400
 h=560
 parse=->k{k.digits(2*h).map{|a|a-w}}
 encode=->*a{a.each_with_index.sum{|v,i|(w+v)*(2*h)**i}}
-bx,by,vx,vy,bar1,push1,bar2,push2=parse[k]
 m1=0
 m2=0
 m=0
 r=40
-rendered=nil
 pushlen=40
 msg=nil
 shape=[0,65504,101936,170792,307620,540738,2097151,540738,278596,139400,73872,37152,20800,10880,6912,3584,1024]
@@ -33,10 +30,10 @@ _render=->k{
   bx,by,vx,vy,bar1,push1,bar2,push2=parse[k]
   bary1=h-r*3/2-pushlen*(push1>0?1:0)
   bary2=r*3/2+pushlen*(push2>0?1:0)
-  s=["require'base64';require'zlib';p=/[^)]+/;q=Base64.decode64(%("]
-  C[/\d+/]=k.to_s
-  codes=(Base64.encode64(Zlib.deflate(C)).delete("\n=")+?(+'#'*C.size).chars
-  s+42.times.map{|iy|
+  $C[/\d+/]=k.to_s
+  codes=[Zlib.deflate($C)].pack(?m).delete("\n=").chars
+  codes+=[?(]+codes
+  l=42.times.map{|iy|
     60.times.map{|ix|
       %[ .,':;"!][8-(0..1).sum{|j|
         ((0..3).count{|k|
@@ -46,15 +43,17 @@ _render=->k{
           l<r**2?0.6*r**2<l:
           (x-bar1)**2+(y-bary1)**2<r**2||
           (x-bar2)**2+(y-bary2)**2<r**2||
-          (shape[[2*iy+j-34,0].max].to_i[ix-35]>0)||
-          (shape[[49-2*iy-j,0].max].to_i[ix-5]>0)
+          (shape[[2*iy+j-34,0].max].to_i[ix-37]>0)||
+          (shape[[49-2*iy-j,0].max].to_i[ix-2]>0)
         }+1)/2*(3-2*j)
       }]||codes.shift
     }.join
-  }+[%[))[p]);eval(C=Zlib.inflate(q)).NetWork.Battle.AirHockey.Quine],"\e[1m#{msg}\e[m"]
+  }
+  l[-1][-12,12]="))[/[^)]+/]]"
+  ["require'zlib';_=->_{eval$C=Zlib.inflate(*_.unpack(?m))};_[%(",l]
 }
 $><< "\e[2J"
-render=->(a){$><< "\e[1;1H"+_render[a]*"\r\n"}
+render=->(a){$><< "\e[1;1H"+[_render[a],'# '+msg]*"\r\n"}
 player=1
 Thread.new{
   STDIN.raw do |f|
@@ -80,22 +79,23 @@ if args.size==2
 end
 if args.size==1
   socket=nil
+  msg="NETWORK BATTLE"
   Thread.new{
     server=TCPServer.new(args.first.to_i)
-    msg="NETWORK BATTLE: LISTENING ON localhost:#{server.addr[1]}"
+    msg << ": LISTENING ON localhost:#{server.addr[1]}"
     loop{
       s=server.accept
       if "x\n"==a=s.gets
         socket=s
         loop{m2=socket.gets.to_i|m2}rescue 1
       else
-        s.write _render[885457562454749327098200]*"\n"
+        s.puts _render[885457562454749327098200]
         s.close
       end
     }
   }
 else
-  msg="2 PLAYER BATTLE: WASD and ARROWS"
+  msg='OFFLINE 2 PLAYER BATTLE: WASD and ARROWS'
   player=2
 end
 loop{
