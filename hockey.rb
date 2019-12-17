@@ -1,24 +1,28 @@
 require 'base64'
 require'zlib'
 C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
-
+a=[0.5,0.5,0,1,0.5,0,0.5,0]
 #BEGIN
 require 'io/console'
 require 'socket'
 require'json'
+bx,by,vx,vy,bar1,push1,bar2,push2=a
 m1=0
 m2=0
 m=0
 r=0.1
 h=1.4
+rendered=nil
 pushlen=0.1
+msg=nil
 shape=[0, 65504, 101936, 170792, 307620, 540738, 2097151, 540738, 278596, 139400, 73872, 37152, 20800, 10880, 6912, 3584, 1024]
-render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
-  $><< "\e[1;1H"
-  puts "require'base64';require'zlib';eval C=Zlib.inflate Base64.decode64(%(;FIXME"
+_render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
+  s=["a=#{[bx,by,vx,vy,bar1,push1,bar2,push2]}",
+    "require'base64';require'zlib';eval C=Zlib.inflate Base64.decode64(%(;FIXME"]
+
   codes=Base64.encode64(Zlib.deflate(C)+"\x0"+'#'*C.size).delete("\n").chars
-  42.times{|iy|
-    puts "\r"+60.times.map{|ix|
+  s+42.times.map{|iy|
+    60.times.map{|ix|
       %[ .,':;"!][8-(0..1).sum{|j|
         ((0..3).count{|k|
           x=(ix+k/2*0.5)*0.02/1.2
@@ -32,8 +36,12 @@ render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
         }+1)/2*(3-2*j)
       }]||codes.shift
     }.join
-  }
-  puts %[\r).delete(%[ .,':;"!])]
+  }+[%[\r).delete(%[ .,':;"!])],"AIR HOCKEY #{msg}"]
+}
+render=->(*a){
+  rendered=a
+  $><< "\e[1;1H"
+  puts _render[*a]*"\r\n"
 }
 player=1
 Thread.new{
@@ -53,26 +61,31 @@ Thread.new{
 args=*(ARGV*'').split(':')
 if args.size==2
   socket=TCPSocket.open(*args)
+  socket.puts :x
   Thread.new{loop{socket.puts(m);m=0;sleep 0.05}}
+  msg="NETWORK BATTLE WITH: #{args*':'}"
   loop{render[*JSON.parse(socket.gets)]}
 end
 if args.size==1
   socket=nil
   Thread.new{
-    server=TCPServer.new(args.first.to_i)
+    server=TCPServer.new(port=args.first.to_i)
+    msg="NETWORK BATTLE: LISTENING ON localhost:#{port}"
     loop{
-      socket=server.accept
-      loop{m2=socket.gets.to_i|m2}rescue 1
+      s=server.accept
+      if "x\n"==a=s.gets
+        socket=s
+        loop{m2=socket.gets.to_i|m2}rescue 1
+      else
+        s.write _render[*rendered]*"\n"
+        s.close
+      end
     }
   }
 else
+  msg="2 PLAYER BATTLE: WASD and ARROWS"
   player=2
 end
-bar1=0.5
-push1=0
-bar2=0.5
-push2=0
-x,y,vx,vy=0.5,0.5,0,1
 loop{
   bar1+=((m1&2)/2-(m1&1))*0.05
   bar2+=((m2&2)/2-(m2&1))*0.05
@@ -84,23 +97,23 @@ loop{
   by1=h-1.5*r-pushlen*(push1>0?1:0)
   by2=1.5*r+pushlen*(push2>0?1:0)
   4.times{
-  x+=vx*0.02
-  y+=vy*0.02
+  bx+=vx*0.02
+  by+=vy*0.02
   vx*=0.99
   vy*=0.99
   vy+=(vy>0?1:-1)*0.005
-  vx=vx.abs if x<r
-  vx=-vx.abs if x>1-r
-  x,y,vx,vy=0.5,h/2,*(0..1).map{0.05*rand(-1..1)} if y>h+r||y<-r
+  vx=vx.abs if bx<r
+  vx=-vx.abs if bx>1-r
+  bx,by,vx,vy=0.5,h/2,*(0..1).map{0.05*rand(-1..1)} if by>h+r||by<-r
   [[bar1,by1],[bar2,by2]].each{|ax,ay|
-    dx=x-ax
-    dy=y-ay
+    dx=bx-ax
+    dy=by-ay
     pv=(ay>h/2?-push1: push2)*0.4
     dr=(dx**2+dy**2)**0.5
     if dr<2*r
-      x+=dx/dr*(2*r-dr)
-      y+=dy/dr*(2*r-dr)
-      x=[r,x,1-r].sort[1]
+      bx+=dx/dr*(2*r-dr)
+      by+=dy/dr*(2*r-dr)
+      bx=[r,bx,1-r].sort[1]
       vx+=dx*(2*r-dr)
       vy+=dy*(2*r-dr)
       dot=vx*dx+(vy-pv)*dy
@@ -111,8 +124,9 @@ loop{
     end
   }
   }
-  render[x,y,vx,vy,bar1,by1,bar2,by2]
-  socket&.puts [x,h-y,-vx,vy,bar2,h-by2,bar1,h-by1].to_json rescue 1
+  bx,by,vx,vy,bar1,by1,bar2,by2=[bx,by,vx,vy,bar1,by1,bar2,by2].map{|a|(a*1000).round/1000.0}
+  render[bx,by,vx,vy,bar1,by1,bar2,by2]
+  socket&.puts [bx,h-by,-vx,vy,bar2,h-by2,bar1,h-by1].to_json rescue 1
   sleep 0.1
 }
 #END
