@@ -49,10 +49,10 @@ _render=->k{
       }]||codes.shift
     }.join
   }
+  (codes*'')[?(]&&raise
   l[-1][-12,12]="))[/[^)]+/]]"
   ["require'zlib';_=->_{eval$C=Zlib.inflate(*_.unpack(?m))};_[%(",l]
 }
-$><< "\e[2J"
 render=->(a){$><< "\e[1;1H"+[_render[a],'# '+msg]*"\r\n"}
 player=1
 Thread.new{
@@ -70,6 +70,7 @@ Thread.new{
   end
 }
 args=*(ARGV*'').split(':')
+$><< "\e[2J"
 if args.size==2
   socket=TCPSocket.open(*args)
   socket.puts :x
@@ -80,8 +81,8 @@ end
 if args.size==1
   socket=nil
   msg="NETWORK BATTLE"
+  server=TCPServer.new(args.first.to_i)
   Thread.new{
-    server=TCPServer.new(args.first.to_i)
     msg << ": LISTENING ON localhost:#{server.addr[1]}"
     loop{
       s=server.accept
@@ -114,7 +115,7 @@ loop{
   by+=vy/50
   vx=vx*99/100
   vy=vy*99/100
-  vy+=(vy>0?2:-2)
+  vy+=vy>0?2:-2
   vx=vx.abs if bx<r
   vx=-vx.abs if bx>w-r
   bx,by,vx,vy=w/2,h/2,rand(-20..20),2*rand(2)-1 if by>=h+r||by<=-r
@@ -132,6 +133,8 @@ loop{
         vx-=(1.5*dot*dx/dr/dr).round
         vy-=(1.5*dot*dy/dr/dr-pv*1.5).round
       end
+      vx+=(50*dx/dr).round
+      vy+=(50*dy/dr).round
     end
   }
   vx=[-w,vx,w].sort[1]
@@ -141,7 +144,7 @@ loop{
   }
   k=encode[bx,by,vx,vy,bar1,push1,bar2,push2]
   render[k]
-  socket&.puts encode[bx,h-by,0,0,bar2,push2,bar1,push1] rescue 1
-  sleep 0.1
+  socket&.puts encode[bx,h-by,vx,-vy,bar2,push2,bar1,push1] rescue 1
+  sleep 0.05
 }
 #END
