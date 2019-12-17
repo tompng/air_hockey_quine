@@ -12,6 +12,7 @@ m=0
 r=0.1
 h=1.4
 pushlen=0.1
+shape=[0, 65504, 101936, 170792, 307620, 540738, 2097151, 540738, 278596, 139400, 73872, 37152, 20800, 10880, 6912, 3584, 1024]
 render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
   $><< "\e[1;1H"
   puts "require'base64';require'zlib';eval C=Zlib.inflate Base64.decode64(%(;FIXME"
@@ -23,9 +24,11 @@ render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
           x=(ix+k/2*0.5)*0.02/1.2
           y=(2*iy+j+k%2*0.5)*0.02/1.2
           l=(x-bx)**2+(y-by)**2
-          (0.08**2<l&&l<r**2)||
+          l<r**2?0.08**2<l:
           (x-bar1)**2+(y-bary1)**2<r**2||
-          (x-bar2)**2+(y-bary2)**2<r**2
+          (x-bar2)**2+(y-bary2)**2<r**2||
+          (shape[[2*iy+j-32,0].max].to_i[ix-35]>0)||
+          (shape[[45-2*iy-j,0].max].to_i[ix-5]>0)
         }+1)/2*(3-2*j)
       }]||codes.shift
     }.join
