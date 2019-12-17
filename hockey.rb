@@ -1,29 +1,41 @@
 require 'base64'
 require'zlib'
 C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
-w=400
-a=[200,280,40,-100,200,0,200,0]
-k=a.each_with_index.map{|v,i|(w+v)*(2*w)**i}.sum
+def hoge
+  w=400
+  h=560
+  a=[200,280,40,-100,200,0,200,0]
+  a.each_with_index.map{|v,i|(w+v)*(2*h)**i}.sum
+end
+if C[/\d+/]!=hoge.to_s
+  puts hoge
+  exit
+end
 #BEGIN
+k=885457562454749327098200
 require 'io/console'
 require 'socket'
 require'json'
 w=400
-bx,by,vx,vy,bar1,push1,bar2,push2=k.digits(2*w).map{|a|a-w}
+h=560
+parse=->k{k.digits(2*h).map{|a|a-w}}
+encode=->*a{a.each_with_index.sum{|v,i|(w+v)*(2*h)**i}}
+bx,by,vx,vy,bar1,push1,bar2,push2=parse[k]
 m1=0
 m2=0
 m=0
 r=40
-h=560
 rendered=nil
 pushlen=40
 msg=nil
 shape=[0,65504,101936,170792,307620,540738,2097151,540738,278596,139400,73872,37152,20800,10880,6912,3584,1024]
-_render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
-  s=["k=#{[bx,by,vx,vy,bar1,push1,bar2,push2].each_with_index.sum{|v,i|(w+v)*(2*w)**i}}",
-    "require'base64';require'zlib';eval C=Zlib.inflate Base64.decode64(%(;FIXME"]
-
-  codes=Base64.encode64(Zlib.deflate(C)+"\x0"+'#'*C.size).delete("\n").chars
+_render=->k{
+  bx,by,vx,vy,bar1,push1,bar2,push2=parse[k]
+  bary1=h-r*3/2-pushlen*(push1>0?1:0)
+  bary2=r*3/2+pushlen*(push2>0?1:0)
+  s=["require'base64';require'zlib';p=/[^)]+/;q=Base64.decode64(%("]
+  C[/\d+/]=k.to_s
+  codes=(Base64.encode64(Zlib.deflate(C)).delete("\n=")+?(+'#'*C.size).chars
   s+42.times.map{|iy|
     60.times.map{|ix|
       %[ .,':;"!][8-(0..1).sum{|j|
@@ -39,12 +51,10 @@ _render=->(bx,by,vx,vy,bar1,bary1,bar2,bary2){
         }+1)/2*(3-2*j)
       }]||codes.shift
     }.join
-  }+[%[).delete(%[ .,':;"!])],"AIR HOCKEY #{msg}"]
+  }+[%[))[p]);eval(C=Zlib.inflate(q)).NetWork.Battle.AirHockey.Quine],"\e[1m#{msg}\e[m"]
 }
-render=->(*a){
-  rendered=a
-  $><< "\e[2J]\e[1;1H"+_render[*a]*"\r\n"
-}
+$><< "\e[2J"
+render=->(a){$><< "\e[1;1H"+_render[a]*"\r\n"}
 player=1
 Thread.new{
   STDIN.raw do |f|
@@ -66,20 +76,20 @@ if args.size==2
   socket.puts :x
   Thread.new{loop{socket.puts(m);m=0;sleep 0.05}}
   msg="NETWORK BATTLE WITH: #{args*':'}"
-  loop{render[*JSON.parse(socket.gets)]}
+  loop{render[socket.gets.to_i]}
 end
 if args.size==1
   socket=nil
   Thread.new{
-    server=TCPServer.new(port=args.first.to_i)
-    msg="NETWORK BATTLE: LISTENING ON localhost:#{port}"
+    server=TCPServer.new(args.first.to_i)
+    msg="NETWORK BATTLE: LISTENING ON localhost:#{server.addr[1]}"
     loop{
       s=server.accept
       if "x\n"==a=s.gets
         socket=s
         loop{m2=socket.gets.to_i|m2}rescue 1
       else
-        s.write _render[*rendered]*"\n"
+        s.write _render[885457562454749327098200]*"\n"
         s.close
       end
     }
@@ -89,6 +99,7 @@ else
   player=2
 end
 loop{
+  bx,by,vx,vy,bar1,push1,bar2,push2=parse[k]
   bar1+=((m1&2)/2-(m1&1))*20
   bar2+=((m2&2)/2-(m2&1))*20
   push1=push1==0&&(m1&4)>0?5:[push1-1,0].max
@@ -128,8 +139,9 @@ loop{
   bx=[0,bx,w].sort[1]
   by=[-r,by,h+r].sort[1]
   }
-  render[bx,by,vx,vy,bar1,by1,bar2,by2]
-  socket&.puts [bx,h-by,-vx,vy,bar2,h-by2,bar1,h-by1].to_json rescue 1
+  k=encode[bx,by,vx,vy,bar1,push1,bar2,push2]
+  render[k]
+  socket&.puts encode[bx,h-by,0,0,bar2,push2,bar1,push1] rescue 1
   sleep 0.1
 }
 #END
