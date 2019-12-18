@@ -49,7 +49,7 @@ C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
 def initial_k
   w=400
   h=560
-  a=[200,280,40,-100,200,0,200,0]
+  a=[200,280,0,0,200,0,200,0]
   a.each_with_index.map{|v,i|(w+v)*(2*h)**i}.sum
 end
 if C[/\d+/]!=initial_k.to_s
@@ -57,7 +57,7 @@ if C[/\d+/]!=initial_k.to_s
   exit
 end
 #BEGIN
-k=885457562454749327098200
+k=885457562454889769722200
 require'io/console'
 require'socket'
 require'json'
@@ -173,7 +173,7 @@ if args.size==1
         sck=s
         loop{m2=sck.gets.to_i|m2}rescue 1
       else
-        s.puts rndr[885457562454749327098200]
+        s.puts rndr[885457562454889769722200]
         s.close
       end
     }
@@ -194,14 +194,14 @@ loop{
   by1=h-r*3/2-pl*(p1>0?1:0)
   by2=r*3/2+pl*(p2>0?1:0)
   4.times{
-  bx+=vx/50
-  by+=vy/50
-  vx=vx*99/100
-  vy=vy*99/100
-  vy+=vy>0?2:-2
+  bx+=(vx*0.02).round
+  by+=(vy*0.02).round
+  vx=(vx*0.98).round
+  vy=(vy*0.98).round
+  vy+=vy>0?2:vy<0?-2:4*rand(2)-2
   vx=vx.abs if bx<r
   vx=-vx.abs if bx>w-r
-  bx,by,vx,vy=w/2,h/2,rand(-20..20),2*rand(2)-1 if by>=h+r||by<=-r
+  bx,by,vx,vy=w/2,h/2,rand(-20..20),0 if by>=h+r||by<=-r
   [[b1,by1],[b2,by2]].each{|ax,ay|
     dx=bx-ax
     dy=by-ay
