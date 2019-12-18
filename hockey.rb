@@ -123,10 +123,10 @@ rndr=->k{
           l<r**2?0.6*r**2<l:
           (x-b1)**2+(y-by1)**2<r**2||
           (x-b2)**2+(y-by2)**2<r**2||
-          (shpa[[yj-24,0].max].to_i[ix-20]>0)||
-          (shpb[[yj-52,0].max].to_i[ix-13]>0)||
-          (shp[[yj-34,0].max].to_i[ix-41]>0)||
-          (shp[[49-yj,0].max].to_i[ix-2]>0)
+          (shpa[[yj-25,0].max].to_i[ix-22]>0)||
+          (shpb[[yj-52,0].max].to_i[ix-12]>0)||
+          (shp[[yj-35,0].max].to_i[ix-45]>0)||
+          (shp[[48-yj,0].max].to_i[ix-2]>0)
         }+1)/2*(3-2*j)
       }]||cs.shift
     }.join
