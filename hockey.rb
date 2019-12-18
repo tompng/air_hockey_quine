@@ -3,7 +3,8 @@ require'zlib'
 def show s
   puts s.delete("|").lines.map{|a|'0b'+a.delete("\n").tr(' ','0').tr('#','1').to_i(2).to_s(2)+','}
 end
-show %[|    #########    |
+show %[
+|    #########    |
 |   ##  # #  ##   |
 |  # # #   # # #  |
 | #   #     #   # |
@@ -44,14 +45,14 @@ show %[
 |#   #   ###    ###   #   #  #####    #
 ]
 
-$C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
+C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
 def initial_k
   w=400
   h=560
   a=[200,280,40,-100,200,0,200,0]
   a.each_with_index.map{|v,i|(w+v)*(2*h)**i}.sum
 end
-if $C[/\d+/]!=initial_k.to_s
+if C[/\d+/]!=initial_k.to_s
   puts initial_k
   exit
 end
@@ -109,8 +110,8 @@ rndr=->k{
   bx,by,vx,vy,b1,p1,b2,p2=dec[k]
   by1=h-r*3/2-pl*(p1>0?1:0)
   by2=r*3/2+pl*(p2>0?1:0)
-  $C[/\d+/]=k.to_s
-  cs=[Zlib.deflate($C)].pack(?m).delete("\n=").chars
+  C[/\d+/]=k.to_s
+  cs=[Zlib.deflate(C)].pack(?m).delete("\n=").chars
   cs+=[?(]+cs
   l=(0...44).map{|iy|
     (0...64).map{|ix|
@@ -133,7 +134,7 @@ rndr=->k{
   }
   (cs*'')[?(]&&raise(cs.index(?().to_s)
   l[-1][-12,12]="))[/[^)]+/]]"
-  ["require'zlib';_=->_{eval$C=Zlib.inflate(*_.unpack(?m))};_[%(",l]
+  ["require'zlib';_=->_{eval(C=Zlib.inflate(_.unpack('m')[0]))};_[%(",l]
 }
 show=->(a){$><< "\e[1;1H"+[rndr[a],'# '+msg]*"\r\n"}
 pn=1
