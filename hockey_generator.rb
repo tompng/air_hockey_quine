@@ -132,8 +132,9 @@ rndr=->k{
       }]||cs.shift
     }.join
   }
-  l[-1][-12,12]="))[/[^)]+/]]"
+  l[-1][-12,12]=''
   (l*'')[?(]||raise
+  l[-1]<<"))[/[^(]+/]]"
   ["require'zlib';_=->_{eval(C=Zlib.inflate(_.unpack('m')[0]))};_[%(",l]
 }
 show=->(a){$><< "\e[1;1H"+[rndr[a],'# '+msg]*"\r\n"}
