@@ -45,14 +45,14 @@ show %[
 ]
 
 $C=File.read(__FILE__).split(/#B[E]GIN/)[1].split(/#E[N]D/)[0].gsub(/^ +/, '')
-def hoge
+def initial_k
   w=400
   h=560
   a=[200,280,40,-100,200,0,200,0]
   a.each_with_index.map{|v,i|(w+v)*(2*h)**i}.sum
 end
-if $C[/\d+/]!=hoge.to_s
-  puts hoge
+if $C[/\d+/]!=initial_k.to_s
+  puts initial_k
   exit
 end
 #BEGIN
@@ -151,7 +151,7 @@ Thread.new{
     }
   }
 }
-args=*(ARGV*'').split(':')
+args=(ARGV*?:).split(?:)
 $><< "\e[2J"
 if args.size==2
   sck=TCPSocket.open(*args)
